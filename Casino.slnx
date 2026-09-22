@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Casino.API/Casino.API.csproj" />
+  <Project Path="Casino.Application/Casino.Application.csproj" />
+  <Project Path="Casino.Domain/Casino.Domain.csproj" />
+  <Project Path="Casino.Infrastructure.Data/Casino.Infrastructure.Data.csproj" />
+  <Project Path="Casino.Infrastructure.External/Casino.Infrastructure.External.csproj" />
+</Solution>

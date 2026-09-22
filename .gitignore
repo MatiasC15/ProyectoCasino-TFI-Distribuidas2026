@@ -1,0 +1,23 @@
+# Carpetas de compilación
+bin/
+obj/
+
+# Archivos de usuario y configuraciones locales
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+appsettings.Development.json
+appsettings
+
+# Logs y bases de datos locales
+*.log
+*.sqlite
+*.mdf
+*.ldf
+
+# Mac/Windows basura
+.DS_Store
+Thumbs.db
+
+.vs/
