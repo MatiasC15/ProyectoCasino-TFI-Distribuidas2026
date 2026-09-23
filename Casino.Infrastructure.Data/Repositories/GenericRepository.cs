@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
+using Casino.Domain.Entities;
 
 namespace Casino.Infrastructure.Data.Repositories
 {
@@ -25,6 +27,12 @@ namespace Casino.Infrastructure.Data.Repositories
         public virtual async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(T entity)
+        {
+            _dbSet.Update(entity);
             await _context.SaveChangesAsync();
         }
     }

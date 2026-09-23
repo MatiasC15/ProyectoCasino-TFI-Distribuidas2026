@@ -22,5 +22,7 @@ namespace Casino.Infrastructure.Data.Repositories
         {
             return await _dbSet.FirstOrDefaultAsync(u => u.Dni == dni);
         }
+
+
     }
 }

@@ -8,5 +8,7 @@ namespace Casino.Application.Interfaces
     {
         Task<T?> GetByIdAsync(Guid id);
         Task AddAsync(T entity);
+        
+
     }
 }

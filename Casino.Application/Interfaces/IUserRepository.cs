@@ -9,6 +9,7 @@ namespace Casino.Application.Interfaces
     {
         Task<User?> GetByEmailAsync(string email);
         Task<User?> GetByDniAsync(string dni);
-        
+
+        Task UpdateAsync(User user);
     }
 }
