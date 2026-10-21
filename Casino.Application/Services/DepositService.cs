@@ -29,9 +29,8 @@ namespace Casino.Application.Services
 
             if(!walletSucces) throw new Exception("La billetera externa rechazo la conexion.");
 
-            user.Saldo += amount;
-            await _userRepository.UpdateAsync(user);
-            return user.Saldo;
+            return await _userRepository.CreditBalanceAndRecordAsync(
+                userId, amount, TransactionType.Deposito, $"deposit:{Guid.NewGuid():N}");
         }
     }
 }

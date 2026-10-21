@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Casino.Application.DTOs;
 using Casino.Application.Services;
+using Casino.Application.Interfaces;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Casino.Infrastructure.Data;
 
 namespace Casino.API.Controllers;
 
@@ -14,11 +17,42 @@ public class WalletController : ControllerBase
 {
     private readonly DepositService _depositService;
     private readonly WithdrawService _withdrawService;
+    private readonly IUserRepository _users;
+    private readonly ApplicationDbContext _db;
 
-    public WalletController(DepositService depositService, WithdrawService withdrawService)
+    public WalletController(DepositService depositService, WithdrawService withdrawService, IUserRepository users, ApplicationDbContext db)
     {
         _depositService = depositService;
         _withdrawService = withdrawService;
+        _users = users;
+        _db = db;
+    }
+
+    [HttpGet("balance")]
+    public async Task<IActionResult> Balance()
+    {
+        var balance = await _users.GetBalanceAsync(GetUserIdFromToken());
+        return balance is null ? NotFound() : Ok(new { Saldo = balance.Value });
+    }
+
+    [HttpGet("transactions")]
+    public async Task<IActionResult> Transactions(CancellationToken cancellationToken)
+    {
+        var userId = GetUserIdFromToken();
+        var transactions = await _db.Transactions.AsNoTracking()
+            .Where(transaction => transaction.UserId == userId)
+            .OrderByDescending(transaction => transaction.Fecha)
+            .ThenByDescending(transaction => transaction.Id)
+            .Select(transaction => new
+            {
+                transaction.Id,
+                Tipo = transaction.Tipo.ToString(),
+                transaction.Monto,
+                transaction.Fecha,
+                transaction.ReferenciaExterna
+            })
+            .ToListAsync(cancellationToken);
+        return Ok(transactions);
     }
 
     private Guid GetUserIdFromToken()

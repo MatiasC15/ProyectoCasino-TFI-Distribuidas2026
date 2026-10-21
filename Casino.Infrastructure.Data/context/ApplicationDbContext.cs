@@ -15,6 +15,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Game> Games { get; set; }
     public DbSet<Bet> Bets { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<RouletteRound> RouletteRounds { get; set; }
+    public DbSet<RouletteConfiguration> RouletteConfigurations { get; set; }
+    public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,6 +58,55 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Bet>()
             .Property(b => b.DetallesJson)
             .HasColumnType("jsonb");
+
+        modelBuilder.Entity<RouletteRound>()
+            .HasIndex(r => new { r.State, r.BettingClosesAtUtc });
+
+        modelBuilder.Entity<RouletteRound>()
+            .HasIndex(r => r.State)
+            .IsUnique()
+            .HasFilter("\"State\" = 1")
+            .HasDatabaseName("IX_RouletteRounds_OnlyOneOpen");
+
+        modelBuilder.Entity<RouletteConfiguration>()
+            .Property(c => c.Id)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<RouletteConfiguration>()
+            .Property(c => c.ChipValuesJson)
+            .HasColumnType("jsonb");
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasIndex(a => new { a.CreatedAtUtc, a.Action });
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .Property(a => a.DetailsJson)
+            .HasColumnType("jsonb");
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(a => a.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(a => a.TargetUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Bet>()
+            .HasIndex(b => b.RouletteRoundId);
+
+        modelBuilder.Entity<Bet>()
+            .HasIndex(b => new { b.UserId, b.IdempotencyKey })
+            .IsUnique();
+
+        modelBuilder.Entity<Bet>()
+            .HasOne(b => b.RouletteRound)
+            .WithMany(r => r.Bets)
+            .HasForeignKey(b => b.RouletteRoundId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // --- Configuración de Transaction ---
         modelBuilder.Entity<Transaction>()

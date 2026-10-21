@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Casino.Domain.Entities
 {
-    public enum TransactionType { Deposito = 1, Retiro = 2, Apuesta = 3, Premio = 4 }
+    public enum TransactionType { Deposito = 1, Retiro = 2, Apuesta = 3, Premio = 4, Reintegro = 5 }
     public class Transaction
     {
         public Guid Id { get; set; }

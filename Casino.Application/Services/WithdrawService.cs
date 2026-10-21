@@ -25,21 +25,29 @@ namespace Casino.Application.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) throw new Exception("Usuario no encontrado.");
 
-            // 1. Chequeamos que tenga plata en el casino antes de pedirle a la billetera que envíe
-            if (user.Saldo < amount)
+            var reference = $"withdrawal:{Guid.NewGuid():N}";
+            // El débito y su movimiento se confirman juntos para evitar saldo sin historial.
+            if (!await _userRepository.TryDebitBalanceAndRecordAsync(userId, amount, TransactionType.Retiro, reference))
                 throw new Exception("Saldo insuficiente en el casino para retirar esa cantidad.");
 
-            // 2. Le decimos a la billetera externa que le mande la plata a la cuenta del usuario
-            bool walletSuccess = await _walletService.WithdrawFromCasinoAsync(user.BilleteraID, amount);
-
+            bool walletSuccess;
+            try
+            {
+                walletSuccess = await _walletService.WithdrawFromCasinoAsync(user.BilleteraID, amount);
+            }
+            catch
+            {
+                // Si el servicio externo falla, liberamos la reserva local.
+                await _userRepository.CreditBalanceAndRecordAsync(userId, amount, TransactionType.Reintegro, $"refund:{reference}");
+                throw;
+            }
             if (!walletSuccess)
+            {
+                await _userRepository.CreditBalanceAndRecordAsync(userId, amount, TransactionType.Reintegro, $"refund:{reference}");
                 throw new Exception("La billetera externa rechazó el pago.");
+            }
 
-            // 3. Descontamos el saldo de nuestro Postgres
-            user.Saldo -= amount;
-            await _userRepository.UpdateAsync(user);
-
-            return user.Saldo;
+            return (await _userRepository.GetBalanceAsync(userId))!.Value;
         }
     }
 }

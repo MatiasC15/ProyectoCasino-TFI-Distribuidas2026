@@ -13,6 +13,8 @@ namespace Casino.Infrastructure.Data.Migrations
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
+        public void BuildSnapshot(ModelBuilder modelBuilder) => BuildModel(modelBuilder);
+
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
@@ -41,6 +43,9 @@ namespace Casino.Infrastructure.Data.Migrations
                     b.Property<Guid>("GameId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("IdempotencyKey")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("MontoApostado")
                         .HasColumnType("decimal(18,2)");
 
@@ -50,6 +55,9 @@ namespace Casino.Infrastructure.Data.Migrations
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("RouletteRoundId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -57,11 +65,105 @@ namespace Casino.Infrastructure.Data.Migrations
 
                     b.HasIndex("GameId");
 
+                    b.HasIndex("RouletteRoundId");
+
+                    b.HasIndex("UserId", "IdempotencyKey")
+                        .IsUnique();
+
                     b.HasIndex("TransactionId");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Bets");
+                });
+
+            modelBuilder.Entity("Casino.Domain.Entities.RouletteRound", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BettingClosesAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("OpenedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SettledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("WinningNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("State", "BettingClosesAtUtc");
+
+                    b.HasIndex("State")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RouletteRounds_OnlyOneOpen")
+                        .HasFilter("\"State\" = 1");
+
+                    b.ToTable("RouletteRounds");
+                });
+
+            modelBuilder.Entity("Casino.Domain.Entities.RouletteConfiguration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedNever()
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BettingDurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ChipValuesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RouletteConfigurations");
+                });
+
+            modelBuilder.Entity("Casino.Domain.Entities.AdminAuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DetailsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid?>("TargetUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("CreatedAtUtc", "Action");
+
+                    b.HasIndex("TargetUserId");
+
+                    b.ToTable("AdminAuditLogs");
                 });
 
             modelBuilder.Entity("Casino.Domain.Entities.Game", b =>
@@ -175,6 +277,11 @@ namespace Casino.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Casino.Domain.Entities.RouletteRound", "RouletteRound")
+                        .WithMany("Bets")
+                        .HasForeignKey("RouletteRoundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Casino.Domain.Entities.Transaction", "Transaction")
                         .WithMany()
                         .HasForeignKey("TransactionId")
@@ -194,6 +301,20 @@ namespace Casino.Infrastructure.Data.Migrations
                     b.Navigation("user");
                 });
 
+            modelBuilder.Entity("Casino.Domain.Entities.AdminAuditLog", b =>
+                {
+                    b.HasOne("Casino.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Casino.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("TargetUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Casino.Domain.Entities.Transaction", b =>
                 {
                     b.HasOne("Casino.Domain.Entities.User", "user")
@@ -206,6 +327,11 @@ namespace Casino.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Casino.Domain.Entities.Game", b =>
+                {
+                    b.Navigation("Bets");
+                });
+
+            modelBuilder.Entity("Casino.Domain.Entities.RouletteRound", b =>
                 {
                     b.Navigation("Bets");
                 });

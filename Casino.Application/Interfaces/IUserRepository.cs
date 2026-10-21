@@ -11,5 +11,10 @@ namespace Casino.Application.Interfaces
         Task<User?> GetByDniAsync(string dni);
 
         Task UpdateAsync(User user);
+        Task<bool> TryDebitBalanceAsync(Guid userId, decimal amount);
+        Task<decimal> CreditBalanceAsync(Guid userId, decimal amount);
+        Task<decimal> CreditBalanceAndRecordAsync(Guid userId, decimal amount, TransactionType type, string reference);
+        Task<bool> TryDebitBalanceAndRecordAsync(Guid userId, decimal amount, TransactionType type, string reference);
+        Task<decimal?> GetBalanceAsync(Guid userId);
     }
 }

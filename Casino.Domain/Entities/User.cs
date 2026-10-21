@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Casino.Domain.Entities
 {
-    public enum Role { admin = 1, user = 2 }
+    public enum Role { admin = 1, user = 2, superadmin = 3 }
     public class User
     {
         public Guid Id { get; set; }

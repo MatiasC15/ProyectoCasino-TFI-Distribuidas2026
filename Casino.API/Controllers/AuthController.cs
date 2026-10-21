@@ -1,6 +1,7 @@
 ﻿using Casino.Application.DTOs;
 using Casino.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Casino.API.Controllers;
@@ -12,11 +13,13 @@ namespace Casino.API.Controllers;
     {
     private readonly RegisterUserService _registerUserService;
     private readonly LoginUserService _loginUserService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(RegisterUserService registerUserService, LoginUserService loginUserService)
+    public AuthController(RegisterUserService registerUserService, LoginUserService loginUserService, ILogger<AuthController> logger)
     {
         _registerUserService = registerUserService;
         _loginUserService = loginUserService;
+        _logger = logger;
     }
 
     [HttpPost("register")]
@@ -27,9 +30,16 @@ namespace Casino.API.Controllers;
             var response = await _registerUserService.ExecuteAsync(request);
             return Ok(response);
         }
+        catch (DbUpdateException ex)
+        {
+            // Conservamos el detalle para el log del servidor, sin exponer SQL ni
+            // datos de la cuenta en la respuesta que recibe el navegador.
+            _logger.LogError(ex, "No se pudo persistir el usuario durante el registro.");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { Error = "No se pudo guardar la cuenta. Revisá que el DNI y el correo sean únicos e intentá nuevamente." });
+        }
         catch (Exception ex)
         {
-            
             return BadRequest(new { Error = ex.Message });
         }
     }

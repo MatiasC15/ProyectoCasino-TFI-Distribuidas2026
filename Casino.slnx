@@ -4,4 +4,5 @@
   <Project Path="Casino.Domain/Casino.Domain.csproj" />
   <Project Path="Casino.Infrastructure.Data/Casino.Infrastructure.Data.csproj" />
   <Project Path="Casino.Infrastructure.External/Casino.Infrastructure.External.csproj" />
+  <Project Path="Casino.Tests/Casino.Tests.csproj" />
 </Solution>

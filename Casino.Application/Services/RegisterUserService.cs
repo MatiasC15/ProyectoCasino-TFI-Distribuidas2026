@@ -47,7 +47,10 @@ namespace Casino.Application.Services
                 Dni = request.Dni,
                 Nombre = request.Nombre,
                 Apellido = request.Apellido,
-                FechaNacimiento = request.FechaNacimiento,
+                // El formulario envía una fecha civil sin zona horaria. La columna
+                // PostgreSQL es timestamptz y Npgsql solo acepta DateTime UTC.
+                // Guardar medianoche UTC conserva exactamente el día elegido.
+                FechaNacimiento = DateTime.SpecifyKind(request.FechaNacimiento.Date, DateTimeKind.Utc),
                 Email = request.Email,
                 PasswordHash = hashedPassword,
                 Saldo = 0, 
