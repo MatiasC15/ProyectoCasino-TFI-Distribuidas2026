@@ -21,3 +21,8 @@ appsettings
 Thumbs.db
 
 .vs/
+# Notas locales con credenciales: nunca al repositorio
+users.txt
+
+# Resultados de pruebas
+TestResults/
